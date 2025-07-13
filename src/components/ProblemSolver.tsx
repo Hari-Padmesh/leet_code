@@ -1,36 +1,21 @@
 import React, { useState } from 'react';
 import { Play, CheckCircle, XCircle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { Problem } from '../App';
-import { ProblemProgress } from '../lib/supabase';
 
 interface ProblemSolverProps {
   problem: Problem;
-  onSolved: (problemId: string, category: string, solution: string) => void;
+  onSolved: (problemId: string) => void;
   onBack: () => void;
-  getProblemProgress: (problemId: string) => ProblemProgress | undefined;
-  updateProgress: (problemId: string, category: string, solved: boolean, solution: string) => void;
 }
 
-const ProblemSolver: React.FC<ProblemSolverProps> = ({ 
-  problem, 
-  onSolved, 
-  onBack, 
-  getProblemProgress, 
-  updateProgress 
-}) => {
-  const problemProgress = getProblemProgress(problem.id);
-  const initialCode = problemProgress?.last_solution || problem.functionSignature + '\n    # Your code here\n    pass';
-  
-  const [code, setCode] = useState(initialCode);
+const ProblemSolver: React.FC<ProblemSolverProps> = ({ problem, onSolved, onBack }) => {
+  const [code, setCode] = useState(problem.functionSignature + '\n    # Your code here\n    pass');
   const [testResults, setTestResults] = useState<Array<{ passed: boolean; input: string; expected: string; actual: string }>>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [allTestsPassed, setAllTestsPassed] = useState(false);
 
   const runTests = () => {
     setIsRunning(true);
-    
-    // Update progress with attempt
-    updateProgress(problem.id, problem.category, false, code);
     
     // Simulate test execution
     setTimeout(() => {
@@ -51,7 +36,7 @@ const ProblemSolver: React.FC<ProblemSolverProps> = ({
       setIsRunning(false);
       
       if (allPassed) {
-        setTimeout(() => onSolved(problem.id, problem.category, code), 1500);
+        setTimeout(() => onSolved(problem.id), 1500);
       }
     }, 1000);
   };
@@ -88,19 +73,6 @@ const ProblemSolver: React.FC<ProblemSolverProps> = ({
             {problem.difficulty}
           </span>
         </div>
-
-        {problemProgress && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-800 mb-2">Your Progress</h4>
-            <div className="text-sm text-blue-700 space-y-1">
-              <p>Attempts: {problemProgress.attempts}</p>
-              <p>Status: {problemProgress.solved ? 'Solved ✓' : 'In Progress'}</p>
-              {problemProgress.solved_at && (
-                <p>Solved on: {new Date(problemProgress.solved_at).toLocaleDateString()}</p>
-              )}
-            </div>
-          </div>
-        )}
 
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">{problem.title}</h1>

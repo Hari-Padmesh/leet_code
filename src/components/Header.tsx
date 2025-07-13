@@ -1,14 +1,13 @@
 import React from 'react';
-import { Code, User, Trophy, Home, LogOut } from 'lucide-react';
+import { Code, User, Trophy, Home } from 'lucide-react';
 
 interface HeaderProps {
-  user: { name: string; email: string; solved: number; total: number };
+  user: { name: string; solved: number; total: number };
   onNavigate: (view: 'home' | 'problems') => void;
   currentView: string;
-  onSignOut: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ user, onNavigate, currentView, onSignOut }) => {
+const Header: React.FC<HeaderProps> = ({ user, onNavigate, currentView }) => {
   return (
     <header className="bg-blue-600 text-white shadow-lg">
       <div className="container mx-auto px-6 py-4">
@@ -31,21 +30,11 @@ const Header: React.FC<HeaderProps> = ({ user, onNavigate, currentView, onSignOu
             
             <div className="flex items-center space-x-4 bg-blue-700 px-4 py-2 rounded-lg">
               <User className="w-5 h-5" />
-              <div className="flex flex-col">
-                <span className="font-medium">{user.name}</span>
-                <span className="text-xs text-blue-200">{user.email}</span>
-              </div>
+              <span className="font-medium">{user.name}</span>
               <div className="flex items-center space-x-1">
                 <Trophy className="w-4 h-4 text-yellow-300" />
                 <span className="text-sm">{user.solved} solved</span>
               </div>
-              <button
-                onClick={onSignOut}
-                className="p-1 hover:bg-blue-600 rounded transition-colors"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
             </div>
           </nav>
         </div>
