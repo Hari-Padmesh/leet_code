@@ -6,9 +6,10 @@ import { getProblemsForCategory } from '../data/problems';
 interface ProblemListProps {
   category: string;
   onProblemSelect: (problem: Problem) => void;
+  getProblemProgress: (problemId: string) => any;
 }
 
-const ProblemList: React.FC<ProblemListProps> = ({ category, onProblemSelect }) => {
+const ProblemList: React.FC<ProblemListProps> = ({ category, onProblemSelect, getProblemProgress }) => {
   const problems = getProblemsForCategory(category);
   
   const getDifficultyColor = (difficulty: string) => {
@@ -53,7 +54,7 @@ const ProblemList: React.FC<ProblemListProps> = ({ category, onProblemSelect }) 
         <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
           <span className="flex items-center">
             <CheckCircle className="w-4 h-4 mr-1 text-green-500" />
-            {problems.filter(p => p.solved).length} solved
+            {problems.filter(p => getProblemProgress(p.id)?.solved).length} solved
           </span>
           <span className="flex items-center">
             <Clock className="w-4 h-4 mr-1" />
@@ -64,6 +65,11 @@ const ProblemList: React.FC<ProblemListProps> = ({ category, onProblemSelect }) 
 
       <div className="space-y-4">
         {problems.map((problem) => (
+          (() => {
+            const progress = getProblemProgress(problem.id);
+            const isSolved = progress?.solved || false;
+            
+            return (
           <div
             key={problem.id}
             className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
@@ -73,7 +79,7 @@ const ProblemList: React.FC<ProblemListProps> = ({ category, onProblemSelect }) 
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    {problem.solved ? (
+                    {isSolved ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <Circle className="w-5 h-5 text-gray-400" />
@@ -113,6 +119,8 @@ const ProblemList: React.FC<ProblemListProps> = ({ category, onProblemSelect }) 
               </div>
             </div>
           </div>
+            );
+          })()
         ))}
       </div>
     </div>

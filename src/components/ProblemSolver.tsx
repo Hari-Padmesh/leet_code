@@ -6,10 +6,21 @@ interface ProblemSolverProps {
   problem: Problem;
   onSolved: (problemId: string) => void;
   onBack: () => void;
+  getProblemProgress: (problemId: string) => any;
+  updateProgress: (problemId: string, solved: boolean, solutionCode?: string) => void;
 }
 
-const ProblemSolver: React.FC<ProblemSolverProps> = ({ problem, onSolved, onBack }) => {
-  const [code, setCode] = useState(problem.functionSignature + '\n    # Your code here\n    pass');
+const ProblemSolver: React.FC<ProblemSolverProps> = ({ 
+  problem, 
+  onSolved, 
+  onBack, 
+  getProblemProgress, 
+  updateProgress 
+}) => {
+  const progress = getProblemProgress(problem.id);
+  const [code, setCode] = useState(
+    progress?.solutionCode || problem.functionSignature + '\n    # Your code here\n    pass'
+  );
   const [testResults, setTestResults] = useState<Array<{ passed: boolean; input: string; expected: string; actual: string }>>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [allTestsPassed, setAllTestsPassed] = useState(false);
@@ -36,13 +47,19 @@ const ProblemSolver: React.FC<ProblemSolverProps> = ({ problem, onSolved, onBack
       setIsRunning(false);
       
       if (allPassed) {
+        updateProgress(problem.id, true, code);
         setTimeout(() => onSolved(problem.id), 1500);
+      } else {
+        // Save progress even if not all tests pass
+        updateProgress(problem.id, false, code);
       }
     }, 1000);
   };
 
   const resetCode = () => {
-    setCode(problem.functionSignature + '\n    # Your code here\n    pass');
+    const defaultCode = problem.functionSignature + '\n    # Your code here\n    pass';
+    setCode(defaultCode);
+    updateProgress(problem.id, false, defaultCode);
     setTestResults([]);
     setAllTestsPassed(false);
   };
@@ -69,9 +86,17 @@ const ProblemSolver: React.FC<ProblemSolverProps> = ({ problem, onSolved, onBack
             <span>Back to Problems</span>
           </button>
           
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(problem.difficulty)}`}>
-            {problem.difficulty}
-          </span>
+          <div className="flex items-center space-x-3">
+            {progress?.solved && (
+              <div className="flex items-center space-x-1 text-green-600">
+                <CheckCircle className="w-4 h-4" />
+                <span className="text-sm font-medium">Solved</span>
+              </div>
+            )}
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(problem.difficulty)}`}>
+              {problem.difficulty}
+            </span>
+          </div>
         </div>
 
         <div>

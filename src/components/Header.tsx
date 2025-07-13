@@ -1,5 +1,6 @@
 import React from 'react';
-import { Code, User, Trophy, Home } from 'lucide-react';
+import { Code, User, Trophy, Home, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
   user: { name: string; solved: number; total: number };
@@ -8,6 +9,12 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ user, onNavigate, currentView }) => {
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <header className="bg-blue-600 text-white shadow-lg">
       <div className="container mx-auto px-6 py-4">
@@ -35,6 +42,13 @@ const Header: React.FC<HeaderProps> = ({ user, onNavigate, currentView }) => {
                 <Trophy className="w-4 h-4 text-yellow-300" />
                 <span className="text-sm">{user.solved} solved</span>
               </div>
+              <button
+                onClick={handleSignOut}
+                className="ml-2 p-1 hover:bg-blue-600 rounded transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </nav>
         </div>

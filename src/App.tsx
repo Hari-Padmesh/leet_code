@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Code, CheckCircle, XCircle, Home, User, Trophy, BookOpen } from 'lucide-react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useProgress } from './hooks/useProgress';
+import AuthForm from './components/AuthForm';
 import ProblemList from './components/ProblemList';
 import ProblemSolver from './components/ProblemSolver';
 import Header from './components/Header';
@@ -25,11 +27,34 @@ export interface Problem {
   solved: boolean;
 }
 
-function App() {
+function AppContent() {
+  const { user, loading: authLoading } = useAuth();
+  const { getSolvedCount, updateProgress, getProblemProgress } = useProgress();
   const [currentView, setCurrentView] = useState<'home' | 'problems' | 'solve'>('home');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
-  const [user, setUser] = useState({ name: 'Student', solved: 0, total: 0 });
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthForm mode={authMode} onToggleMode={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')} />;
+  }
+
+  const userStats = {
+    name: user.user_metadata?.name || user.email?.split('@')[0] || 'Student',
+    solved: getSolvedCount(),
+    total: 0
+  };
 
   const categories = [
     { id: 'warmup', name: 'Warmup-1', description: 'Simple warmup problems with if/else logic' },
@@ -46,7 +71,7 @@ function App() {
   };
 
   const handleProblemSolved = (problemId: string) => {
-    setUser(prev => ({ ...prev, solved: prev.solved + 1 }));
+    updateProgress(problemId, true);
     setCurrentView('problems');
     setSelectedProblem(null);
   };
@@ -59,7 +84,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
-        user={user} 
+        user={userStats} 
         onNavigate={(view) => setCurrentView(view)}
         currentView={currentView}
       />
@@ -79,7 +104,7 @@ function App() {
           {currentView === 'home' && (
             <HomePage 
               categories={categories}
-              user={user}
+              user={userStats}
               onCategorySelect={(categoryId) => {
                 setSelectedCategory(categoryId);
                 setCurrentView('problems');
@@ -91,6 +116,7 @@ function App() {
             <ProblemList 
               category={selectedCategory}
               onProblemSelect={handleProblemSelect}
+              getProblemProgress={getProblemProgress}
             />
           )}
           
@@ -99,11 +125,21 @@ function App() {
               problem={selectedProblem}
               onSolved={handleProblemSolved}
               onBack={handleBackToProblems}
+              getProblemProgress={getProblemProgress}
+              updateProgress={updateProgress}
             />
           )}
         </main>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
