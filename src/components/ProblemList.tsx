@@ -129,7 +129,8 @@ const ProblemList: React.FC<ProblemListProps> = ({ category, onProblemSelect, ge
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
