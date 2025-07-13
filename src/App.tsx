@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Code, CheckCircle, XCircle, Home, User, Trophy, BookOpen } from 'lucide-react';
+import { Code, CheckCircle, XCircle, Home, User, Trophy, BookOpen, LogOut } from 'lucide-react';
 import ProblemList from './components/ProblemList';
 import ProblemSolver from './components/ProblemSolver';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import HomePage from './components/HomePage';
+import AuthForm from './components/AuthForm';
+import { useAuth } from './hooks/useAuth';
+import { useProgress } from './hooks/useProgress';
 
 export interface Problem {
   id: string;
@@ -26,10 +29,34 @@ export interface Problem {
 }
 
 function App() {
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { progress, updateProgress, getProblemProgress, getSolvedCount } = useProgress(user);
+  
   const [currentView, setCurrentView] = useState<'home' | 'problems' | 'solve'>('home');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
-  const [user, setUser] = useState({ name: 'Student', solved: 0, total: 0 });
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthForm onAuthSuccess={() => {}} />;
+  }
+
+  const userProfile = {
+    name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Student',
+    email: user.email || '',
+    solved: getSolvedCount(),
+    total: progress.length
+  };
 
   const categories = [
     { id: 'warmup', name: 'Warmup-1', description: 'Simple warmup problems with if/else logic' },
@@ -45,8 +72,8 @@ function App() {
     setCurrentView('solve');
   };
 
-  const handleProblemSolved = (problemId: string) => {
-    setUser(prev => ({ ...prev, solved: prev.solved + 1 }));
+  const handleProblemSolved = async (problemId: string, category: string, solution: string) => {
+    await updateProgress(problemId, category, true, solution);
     setCurrentView('problems');
     setSelectedProblem(null);
   };
@@ -59,9 +86,10 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
-        user={user} 
+        user={userProfile} 
         onNavigate={(view) => setCurrentView(view)}
         currentView={currentView}
+        onSignOut={signOut}
       />
       
       <div className="flex">
@@ -79,7 +107,7 @@ function App() {
           {currentView === 'home' && (
             <HomePage 
               categories={categories}
-              user={user}
+              user={userProfile}
               onCategorySelect={(categoryId) => {
                 setSelectedCategory(categoryId);
                 setCurrentView('problems');
@@ -91,6 +119,7 @@ function App() {
             <ProblemList 
               category={selectedCategory}
               onProblemSelect={handleProblemSelect}
+              getProblemProgress={getProblemProgress}
             />
           )}
           
@@ -99,6 +128,8 @@ function App() {
               problem={selectedProblem}
               onSolved={handleProblemSolved}
               onBack={handleBackToProblems}
+             getProblemProgress={getProblemProgress}
+             updateProgress={updateProgress}
             />
           )}
         </main>
